@@ -494,7 +494,7 @@ server <- function(input, output) {
 
         plot_data_heatmap(m, view = dataViewSelection(), groups = groupsSelection(), 
                           factor = dataFactorSelection(), features = selection_features,
-                          annotation_samples = annotation_samples)
+                          annotation_samples = annotation_samples, scale="row", denoise=TRUE)
     })
 
     output$dataScatterPlot <- renderPlot({
