@@ -14,6 +14,7 @@ library(tools)
 library(ggplot2)
 library(ggpubr)
 library(MOFA2)
+library(plotly)
 
 options(shiny.maxRequestSize = 1500*1024^2)
 
@@ -92,7 +93,7 @@ ui <- fluidPage(theme = "styles.css",
                        column(3, uiOutput("dataFeatureSelection"))
                     ),
                     plotOutput("dataHeatmapPlot"),
-                    plotOutput("dataScatterPlot")
+                    plotlyOutput("dataScatterPlot")
                 ),
                 tabPanel("Factors beeswarm", 
                     p("Visualize factor values and explore their distribution in different sets of samples", class="description"),
@@ -142,7 +143,7 @@ ui <- fluidPage(theme = "styles.css",
                        column(2, sliderInput(inputId = 'manifoldDotSize', label = 'Point size', value = 2, min = 1, max = 8, step = .5))
                     ),
                     hr(),
-                    plotOutput("dimredPlot")
+                    plotlyOutput("dimredPlot")
                 )
             ),
             width = 9
@@ -497,7 +498,7 @@ server <- function(input, output) {
                           annotation_samples = annotation_samples, scale="row", denoise=TRUE)
     })
 
-    output$dataScatterPlot <- renderPlot({
+    output$dataScatterPlot <- renderPlotly({
         m <- model()
         if (is.null(m)) return(NULL)
 
@@ -506,8 +507,9 @@ server <- function(input, output) {
         if (!is.null(dataFeatureSelection()) && (length(dataFeatureSelection()) > 0))
             selection_features <- dataFeatureSelection()
 
-        plot_data_scatter(m, view = dataViewSelection(), groups = groupsSelection(), 
-                          factor = dataFactorSelection(), features = selection_features)
+        p <- plot_data_scatter(m, view = dataViewSelection(), groups = groupsSelection(), 
+                          factor = dataFactorSelection(), features = selection_features, color_by = colourSelection())
+        ggplotly(p)
     })
 
 
@@ -573,7 +575,7 @@ server <- function(input, output) {
                     selected = manifoldSelection())
     })
     
-    output$dimredPlot <- renderPlot({
+    output$dimredPlot <- renderPlotly({
         m <- model()
         method <- manifoldSelection()
         if (is.null(m) || is.null(method) || (method == "")) {
@@ -581,13 +583,14 @@ server <- function(input, output) {
         } else {
             set.seed(1)
             if (method == "TSNE") {
-                plot_dimred(m, method, groups = groupsSelection(), factors = factorsSelection(), color_by = colourSelection(),
+                p <- plot_dimred(m, method, groups = groupsSelection(), factors = factorsSelection(), color_by = colourSelection(),
                         # Provide perplexity for t-SNE since the default one is typically too high for small datasets
                         perplexity = 10, dot_size = input$manifoldDotSize)     
             } else {
-                plot_dimred(m, method, groups = groupsSelection(), factors = factorsSelection(), color_by = colourSelection(),
+                p <- plot_dimred(m, method, groups = groupsSelection(), factors = factorsSelection(), color_by = colourSelection(),
                             dot_size = input$manifoldDotSize)
             }
+            ggplotly(p)
         }
     })
 
