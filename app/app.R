@@ -116,7 +116,7 @@ ui <- fluidPage(theme = "styles.css",
                                  style = "margin-right: 5px;")
                     ),
                     hr(),
-                    plotOutput("factorsPlot")
+                    plotlyOutput("factorsPlot")
                 ),
                 tabPanel("Factors scatter", 
                     p("Visualize pairs of factors to study how they separate different sets of samples.", class="description"),
@@ -446,7 +446,7 @@ server <- function(input, output) {
 
     ### FACTOR VALUES ###
     
-    output$factorsPlot <- renderPlot({
+    output$factorsPlot <- renderPlotly({
         m <- model()
         if (is.null(m)) return(NULL)
         p <- plot_factor(m, factors = factorsSelection(), color_by = colourSelection(), group_by = factorsAxisSelection_x(), 
@@ -457,6 +457,7 @@ server <- function(input, output) {
         } else {
             p
         }
+        ggplotly(p)
     })
 
     output$factorsAxisChoice_x <- renderUI({
@@ -531,7 +532,8 @@ server <- function(input, output) {
         m <- model()
         if (is.null(m)) return(NULL)
         plot_factors(m, groups = groupsSelection(), factors = c(input$factorChoice_x, input$factorChoice_y), color_by = colourSelection(),
-                     dot_size = input$factorDotSize, alpha = input$factorDotAlpha)
+                     dot_size = input$factorDotSize, alpha = input$factorDotAlpha) +
+                     stat_ellipse(aes(color=colourSelection()), geom = "polygon", alpha=0.25)
     })
     
     output$embeddingsInfo <- renderPrint({
